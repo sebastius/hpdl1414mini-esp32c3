@@ -143,7 +143,7 @@ def connect_to_wifi():
             machine.reset()
         
     clearscreen()
-    printstring("Con!",0)
+    #printstring("Con!",0)
 
 def is_dst_europe(year, month, day, hour):
     """
@@ -205,7 +205,7 @@ def ntp_sync():
         try:
             ntptime.settime()  # This will set the time on the Pico W
             print("succesfull NTP")
-            printstring("ntp!",0)
+            printstring("N    ",0)
             ntpsync=1
             last_called = time.mktime(time.localtime())
         except Exception as e:  # Catch all exceptions
@@ -237,6 +237,3 @@ while 1:
     check_and_run()
     clock()
     time.sleep_us(100000)
-
-
-
