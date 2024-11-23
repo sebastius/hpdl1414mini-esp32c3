@@ -197,15 +197,27 @@ def clock():
     printstring(formatted_time,0)
 
 def ntp_sync():
-    try:
-        ntptime.settime()  # This will set the time on the Pico W
-        print("succesfull NTP")
-        printstring("ntp!",0)
-    except Exception as e:  # Catch all exceptions
-        print(f"An error occurred: {e}")
-        printstring("noTP",0)
-        machine.reset()
-
+    ntpsync=0
+    tries=0
+    global last_called
+    while not ntpsync:
+        try:
+            ntptime.settime()  # This will set the time on the Pico W
+            print("succesfull NTP")
+            printstring("ntp!",0)
+        except Exception as e:  # Catch all exceptions
+            print(f"An error occurred: {e}")
+            printstring("noTP",0)
+            wlan = network.WLAN(network.STA_IF)
+            if wlan.isconnected():
+                tries=tries+1
+                time.sleep(1)
+                if tries>8:
+                    machine.reset()
+            else:
+                connect_to_wifi()
+        ntpsync=1
+        last_called = time.mktime(time.localtime()) 
 
 def check_and_run():
     global last_called
@@ -213,10 +225,7 @@ def check_and_run():
 
     # Check if the elapsed time since the last call is greater than the interval
     if current_time - last_called >= interval:
-        ntp_sync()          # Call the function
-        current_time = time.mktime(time.localtime()) 
-        last_called = current_time  # Update last called time
-
+        ntp_sync()          # Call the function 
 
 connect_to_wifi()
 ntp_sync()
@@ -225,6 +234,3 @@ while 1:
     check_and_run()
     clock()
     time.sleep_us(100000)
-
-
-
