@@ -1,9 +1,6 @@
 # This file is executed on every boot (including wake-boot from deepsleep)
 import esp
 esp.osdebug(None)
-#import webrepl
-#import webrepl_setup
-#webrepl.start()
 
 from machine import Pin
 import network
@@ -13,16 +10,15 @@ import machine
 
 print(time.localtime(time.mktime(time.localtime())))
 
-
 A0 = Pin(7, Pin.OUT)
 A1 = Pin(8, Pin.OUT)
 WR0 = Pin(9, Pin.OUT)
 
 WR0.value(1)
 
-
 timezone_offset = 1* 3600
 months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"]
+spinner = ['\\', '1', '/', '-']
 
 last_called = 0
 interval = 3600  # 1 hour in seconds, so check NTP every hour.
@@ -132,14 +128,19 @@ def clearscreen():
     
 
 def connect_to_wifi():
+    tries=0
     wlan = network.WLAN(network.STA_IF)
     wlan.active(False)    
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
 
     while not wlan.isconnected():
-        printstring("conn",0)
+        printstring("w  ",0)
+        printstring(spinner[tries % len(spinner)],3)
+        tries=tries+1
         time.sleep(1)
+        if tries>24:
+            machine.reset()
         
     clearscreen()
     printstring("Con!",0)
@@ -205,9 +206,12 @@ def ntp_sync():
             ntptime.settime()  # This will set the time on the Pico W
             print("succesfull NTP")
             printstring("ntp!",0)
+            ntpsync=1
+            last_called = time.mktime(time.localtime())
         except Exception as e:  # Catch all exceptions
             print(f"An error occurred: {e}")
-            printstring("noTP",0)
+            printstring("N  ",0)
+            printstring(printstring(spinner[tries % len(spinner)],3))
             wlan = network.WLAN(network.STA_IF)
             if wlan.isconnected():
                 tries=tries+1
@@ -216,8 +220,7 @@ def ntp_sync():
                     machine.reset()
             else:
                 connect_to_wifi()
-        ntpsync=1
-        last_called = time.mktime(time.localtime()) 
+ 
 
 def check_and_run():
     global last_called
@@ -234,3 +237,6 @@ while 1:
     check_and_run()
     clock()
     time.sleep_us(100000)
+
+
+
